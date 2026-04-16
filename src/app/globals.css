@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --background: #0a0f1a;
+    --foreground: #e2e8f0;
+    
+    --card: #111827;
+    --card-foreground: #e2e8f0;
+    
+    --popover: #111827;
+    --popover-foreground: #e2e8f0;
+    
+    --primary: #00c9a7;
+    --primary-foreground: #0a0f1a;
+    
+    --secondary: #1a2236;
+    --secondary-foreground: #e2e8f0;
+    
+    --muted: #1e2d47;
+    --muted-foreground: #64748b;
+    
+    --accent: #3b82f6;
+    --accent-foreground: #e2e8f0;
+    
+    --destructive: #ef4444;
+    --destructive-foreground: #f8fafc;
+    
+    --border: #1e2d47;
+    --input: #1e2d47;
+    --ring: #00c9a7;
+    
+    --radius: 0.5rem;
+    
+    --success: #22c55e;
+    --warning: #f59e0b;
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sora), system-ui, sans-serif;
+  }
+}
+
+.font-mono {
+  font-family: var(--font-dm-mono), monospace;
+}
+
+/* Custom Utilities from Legacy App */
+.bg-surface { background-color: var(--card); }
+.bg-surface-2 { background-color: var(--secondary); }
+.text-accent { color: var(--primary); }
+.text-muted { color: var(--muted-foreground); }

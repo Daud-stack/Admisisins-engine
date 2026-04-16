@@ -1,0 +1,166 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  password      String?
+  role          String    @default("CLERK")
+  dept          String    @default("Admissions")
+  status        String    @default("Active")
+  isSupervisor  Boolean   @default(false)
+  pin           String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  checks        AdmissionCheck[]
+  issuesFound   Issue[] @relation("CapturedBy")
+  issuesAssigned Issue[] @relation("Responsible")
+  signoffs      ShiftSignoff[]
+  peerAudits    PeerAudit[]
+  achievements  Achievement[]
+}
+
+model AdmissionCheck {
+  id            String    @id @default(cuid())
+  date          DateTime
+  shift         String
+  patientName   String
+  admNo         String    @unique
+  ptype         String
+  
+  prenote       String    @default("NA")
+  medaid        String    @default("NA")
+  diag          String    @default("NA")
+  receipt       String    @default("NA")
+  bio           String    @default("NA")
+  gop           String    @default("NA")
+  
+  issueCat      String?
+  comment       String?
+  
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  
+  signoffId     String?
+  signoff       ShiftSignoff? @relation(fields: [signoffId], references: [id])
+  
+  issues        Issue[]
+  peerAudits    PeerAudit[]
+  
+  isVerified    Boolean   @default(false)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model PeerAudit {
+  id              String    @id @default(cuid())
+  checkId         String
+  check           AdmissionCheck @relation(fields: [checkId], references: [id])
+  
+  supervisorId    String
+  supervisor      User      @relation(fields: [supervisorId], references: [id])
+  
+  status          String    @default("Pending") // Pending, Validated, Disputed
+  score           Int?      // 0-100 precision score
+  comments        String?
+  
+  createdAt       DateTime  @default(now())
+}
+
+model Issue {
+  id              String    @id @default(cuid())
+  checkId         String?
+  check           AdmissionCheck? @relation(fields: [checkId], references: [id])
+  
+  dateIdentified  DateTime  @default(now())
+  patientName     String
+  admNo           String
+  ptype           String
+  dept            String    @default("Admissions")
+  
+  capturedById    String
+  capturedBy      User      @relation("CapturedBy", fields: [capturedById], references: [id])
+  
+  category        String
+  description     String?
+  rootCause       String?
+  actionRequired  String?
+  
+  responsibleId   String?
+  responsible     User?     @relation("Responsible", fields: [responsibleId], references: [id])
+  
+  status          String    @default("Open")
+  priority        String    @default("Medium") // Low, Medium, High, Critical
+  deadline        DateTime? // SLA deadline
+  dateResolved    DateTime?
+  tat             Float?
+  comments        String?
+  
+  actionPlans     ActionPlan[]
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model ActionPlan {
+  id              String    @id @default(cuid())
+  issueId         String
+  issue           Issue     @relation(fields: [issueId], references: [id])
+  
+  description     String
+  type            String    // Corrective, Preventive
+  status          String    @default("Pending") // Pending, Completed
+  
+  createdAt       DateTime  @default(now())
+}
+
+model Achievement {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id])
+  
+  type            String    // AccuracyBadge, SpeedDemon, MasterSignoff
+  level           Int       @default(1)
+  unlockedAt      DateTime  @default(now())
+}
+
+model SystemLog {
+  id              String    @id @default(cuid())
+  event           String    // AUDIT_CREATED, ISSUE_RESOLVED, SIGNOFF_COMPLETED
+  userId          String?
+  shift           String?
+  data            Json?
+  
+  createdAt       DateTime  @default(now())
+}
+
+model ShiftSignoff {
+  id            String    @id @default(cuid())
+  date          DateTime
+  shift         String
+  supervisorId  String
+  supervisor    User      @relation(fields: [supervisorId], references: [id])
+  signedAt      DateTime  @default(now())
+  dqcCount      Int
+  
+  checks        AdmissionCheck[]
+}
+
+model IngestedData {
+  id          String   @id @default(cuid())
+  type        String   // THROUGHPUT, AUTH, CPT
+  sourceFile  String?
+  data        Json
+  episodeNo   String?
+  loadedAt    DateTime @default(now())
+
+  @@index([episodeNo])
+}
