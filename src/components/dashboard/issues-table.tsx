@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, Fragment } from "react"
 import { updateIssueStatus } from "@/lib/actions/issues"
 import { 
   AlertCircle, 
@@ -80,7 +80,7 @@ export default function IssuesTable({ issues }: IssuesTableProps) {
               const hasPlans = issue.actionPlans && issue.actionPlans.length > 0
               
               return (
-                <React.Fragment key={issue.id}>
+                <Fragment key={issue.id}>
                 <tr className={cn("hover:bg-white/5 transition-colors group border-b border-border/30", isExpanded && "bg-white/2")}>
                   <td className="px-6 py-4 max-w-[200px]">
                     <div className="flex flex-col">
@@ -190,7 +190,7 @@ export default function IssuesTable({ issues }: IssuesTableProps) {
                     </td>
                   </tr>
                 )}
-                </React.Fragment>
+                </Fragment>
               )
             })
           )}

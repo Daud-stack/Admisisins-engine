@@ -42,7 +42,7 @@ export async function checkAndUnlockAchievements(userId: string) {
   // Logic to check if user deserves a badge
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    include: { checks: { include: { peerAudits: true } } }
+    include: { checks: { include: { peerAudits: true } }, achievements: true }
   })
 
   if (!user) return

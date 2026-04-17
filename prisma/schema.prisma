@@ -164,3 +164,25 @@ model IngestedData {
 
   @@index([episodeNo])
 }
+
+model AuditTrail {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String   // PAGE_ACCESS, DATA_EXPORT, ROLE_CHANGE, CONFIG_UPDATE
+  resource  String   // /dashboard, /analytics, user:xyz
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model FileIngestion {
+  id          String   @id @default(cuid())
+  fileName    String
+  fileHash    String   @unique
+  type        String   // THROUGHPUT, AUTH, CPT
+  recordCount Int
+  uploadedBy  String?
+  uploadedAt  DateTime @default(now())
+}

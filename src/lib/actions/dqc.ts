@@ -27,7 +27,7 @@ export async function createDQCRecord(formData: any) {
   } = formData
 
   // Calculate Issue Category based on "N" responses
-  const issues = []
+  const issues: string[] = []
   if (prenote === "N") issues.push("Prenote")
   if (medaid === "N") issues.push("MedAid")
   if (diag === "N") issues.push("Diagnosis")
@@ -93,7 +93,7 @@ export async function createDQCRecord(formData: any) {
       })
 
       // 5. Check for Achievement Unlocks
-      await checkAndUnlockAchievements(session.user.id)
+      await checkAndUnlockAchievements((session?.user as any)?.id || (session as any)?.id)
 
       return dqc
     })

@@ -9,10 +9,9 @@ import {
   Target
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-// Note: We use the server action directly or mock data for the trend. 
-// For this visual refinement, we'll implement a robust styled dashboard.
 import { getVolumeErrorCorrelation } from "@/lib/actions/analytics"
 import RiskFluxChart from "@/components/dashboard/risk-flux-chart"
+import AnalyticsExport from "@/components/dashboard/analytics-export"
 
 export default async function AnalyticsPage() {
   const scorecards = await buildClerkScorecards()
@@ -26,7 +25,8 @@ export default async function AnalyticsPage() {
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Revenue & Performance Intelligence</h1>
           <p className="text-muted-foreground mt-1 font-mono uppercase text-[10px] tracking-widest">Cross-Reference Engine · v2.0 Neural Bridge</p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex gap-4 items-center">
+          <AnalyticsExport scorecards={scorecards} />
           <div className="bg-surface px-6 py-3 rounded-2xl border border-border flex items-center gap-4">
             <div className="flex flex-col">
               <span className="text-[9px] font-bold text-muted-foreground uppercase">Revenue At Risk</span>

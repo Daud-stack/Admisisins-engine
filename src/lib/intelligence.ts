@@ -1,6 +1,7 @@
 /**
  * Admissions QA Intelligence Engine
- * Provides statistical anomaly detection and automated root-cause insights.
+ * Provides statistical anomaly detection, predictive forecasting,
+ * process drift detection, and automated root-cause insights.
  */
 
 export interface AIInsight {
@@ -85,5 +86,87 @@ export function calculateSLADeadline(priority: string): Date {
       return new Date(now.getTime() + 72 * 60 * 60 * 1000) // 72 hours
     default:
       return new Date(now.getTime() + 48 * 60 * 60 * 1000) // 48 hours
+  }
+}
+
+/**
+ * Forecasts future audit volumes using simple linear regression.
+ * Returns predicted values for the next `horizon` days.
+ */
+export function forecastTrend(
+  data: number[],
+  horizon: number = 7
+): { predictions: number[]; slope: number; direction: 'rising' | 'falling' | 'stable' } {
+  if (data.length < 3) {
+    return { predictions: [], slope: 0, direction: 'stable' }
+  }
+
+  const n = data.length
+  let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0
+
+  for (let i = 0; i < n; i++) {
+    sumX += i
+    sumY += data[i]
+    sumXY += i * data[i]
+    sumX2 += i * i
+  }
+
+  const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX)
+  const intercept = (sumY - slope * sumX) / n
+
+  const predictions: number[] = []
+  for (let i = 0; i < horizon; i++) {
+    const predicted = Math.max(0, Math.round(slope * (n + i) + intercept))
+    predictions.push(predicted)
+  }
+
+  const direction = slope > 0.5 ? 'rising' : slope < -0.5 ? 'falling' : 'stable'
+
+  return { predictions, slope, direction }
+}
+
+/**
+ * Detects process drift by comparing current-window distribution
+ * against a historical baseline using the Coefficient of Variation (CV).
+ */
+export function detectDriftPattern(
+  current: number[],
+  baseline: number[]
+): AIInsight | null {
+  if (current.length < 3 || baseline.length < 3) return null
+
+  const calcCV = (arr: number[]) => {
+    const mean = arr.reduce((a, b) => a + b, 0) / arr.length
+    if (mean === 0) return 0
+    const std = Math.sqrt(arr.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / arr.length)
+    return std / mean
+  }
+
+  const currentCV = calcCV(current)
+  const baselineCV = calcCV(baseline)
+  const currentMean = current.reduce((a, b) => a + b, 0) / current.length
+  const baselineMean = baseline.reduce((a, b) => a + b, 0) / baseline.length
+
+  // Drift detection: significant change in CV or mean shift > 30%
+  const cvDrift = Math.abs(currentCV - baselineCV) > 0.3
+  const meanShift = baselineMean > 0 ? Math.abs(currentMean - baselineMean) / baselineMean : 0
+  const hasMeanDrift = meanShift > 0.3
+
+  if (!cvDrift && !hasMeanDrift) return null
+
+  const severity = (cvDrift && hasMeanDrift) ? 'high' : 'medium'
+  const shiftDirection = currentMean > baselineMean ? 'increase' : 'decrease'
+  const shiftPct = (meanShift * 100).toFixed(0)
+
+  return {
+    id: 'drift-process',
+    type: 'trend',
+    severity,
+    title: 'Process Drift Detected',
+    description: `Current week shows a ${shiftPct}% ${shiftDirection} in volume vs. baseline. ${
+      cvDrift ? 'Variability pattern has also shifted significantly.' : 'Consistency is within bounds but volume has shifted.'
+    }`,
+    metric: 'Volume Drift',
+    value: `${shiftPct}% ${shiftDirection}`
   }
 }

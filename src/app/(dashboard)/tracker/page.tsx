@@ -1,4 +1,5 @@
 import IssuesTable from "@/components/dashboard/issues-table"
+import TrackerExport from "@/components/dashboard/tracker-export"
 import { getIssues } from "@/lib/actions/issues"
 import { AlertCircle, Target, CheckCircle2 } from "lucide-react"
 
@@ -15,7 +16,8 @@ export default async function TrackerPage() {
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Incident Command</h1>
           <p className="text-muted-foreground mt-1 font-mono uppercase text-[10px] tracking-widest">Global Issue Tracker · Resolved: {issues.length - openCount - pendingCount}</p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex gap-4 items-center">
+          <TrackerExport issues={issues} />
           <div className="bg-surface px-6 py-3 rounded-2xl border border-border flex items-center gap-4">
             <div className="flex flex-col">
               <span className="text-[9px] font-bold text-muted-foreground uppercase">Critical Load</span>
