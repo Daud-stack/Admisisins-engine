@@ -79,7 +79,7 @@ export async function getRevenueIntelligence() {
 
   authData.forEach(record => {
     const data = record.data as any
-    const amount = parseFloat(String(data.Amount || 0).replace(/[$,]/g, ''))
+    const amount = parseFloat(String(data.Amount || data.Total || 0).replace(/[$,]/g, ''))
     const status = (data.Status || "").toUpperCase()
 
     totalAuthValue += amount
