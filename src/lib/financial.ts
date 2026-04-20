@@ -69,7 +69,7 @@ export function calculateBadDebtRisk(
     if (status.includes("REJECTED") || status.includes("DECLINED")) riskScore += 40
     else if (status.includes("PENDING") || status.includes("TBA")) riskScore += 25
     else if (status.includes("PARTIAL")) riskScore += 15
-    else if (status.includes("APPROVED") || status.includes("PAID")) riskScore += 0
+    else if (status.includes("APPROVED") || status.includes("PAID") || status.includes("INBENEFIT") || status.includes("IN BENEFIT") || status.includes("IN-BENEFIT")) riskScore += 0
     else riskScore += 20  // Unknown status
     
     // Aging factor (0-30 points)
@@ -143,6 +143,7 @@ export function getSchemeBreakdown(
     if (status.includes("REJECTED")) risk = 90
     else if (status.includes("PENDING") || status.includes("TBA")) risk = 50
     else if (status.includes("PARTIAL")) risk = 30
+    else if (status.includes("APPROVED") || status.includes("PAID") || status.includes("INBENEFIT") || status.includes("IN BENEFIT") || status.includes("IN-BENEFIT")) risk = 10
     else risk = 10
     schemeMap[scheme].riskScores.push(risk)
   })
