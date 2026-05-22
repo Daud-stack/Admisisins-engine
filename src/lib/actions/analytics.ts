@@ -1,54 +1,59 @@
 "use server"
 
 import prisma from "@/lib/prisma"
+import { unstable_cache } from "next/cache"
 
-export async function getKPIMetrics() {
-  try {
-    // 1. Calculate Station Precision (Average of all validated Peer Audits)
-    const peerAudits = await prisma.peerAudit.findMany({
-      where: { status: "Validated" },
-      select: { score: true }
-    })
-    const avgPrecision = peerAudits.length > 0 
-      ? peerAudits.reduce((acc, a) => acc + (a.score || 0), 0) / peerAudits.length 
-      : 98.2 // Fallback to baseline if no audits yet
+export const getKPIMetrics = unstable_cache(
+  async () => {
+    try {
+      // Parallelize all data fetching for performance
+      const [peerAudits, auditCount, issueCount, recentAudits] = await Promise.all([
+        prisma.peerAudit.findMany({
+          where: { status: "Validated" },
+          select: { score: true }
+        }),
+        prisma.admissionCheck.count(),
+        prisma.issue.count({
+          where: { status: "Open" }
+        }),
+        prisma.admissionCheck.findMany({
+          take: 20,
+          orderBy: { createdAt: 'desc' },
+          select: { issueCat: true }
+        })
+      ])
 
-    // 2. Audit Volume (Total DQC records in last 30 days)
-    const auditCount = await prisma.admissionCheck.count()
+      // 1. Calculate Station Precision (Average of all validated Peer Audits)
+      const avgPrecision = peerAudits.length > 0
+        ? peerAudits.reduce((acc, a) => acc + (a.score || 0), 0) / peerAudits.length
+        : 98.2 // Fallback to baseline if no audits yet
 
-    // 3. Active Protocol Flags (Open Issues)
-    const issueCount = await prisma.issue.count({
-      where: { status: "Open" }
-    })
+      // 4. Shift Risk Index (Calculated from recent error density)
+      const failureRate = recentAudits.length > 0
+        ? recentAudits.filter(a => a.issueCat).length / recentAudits.length
+        : 0
 
-    // 4. Shift Risk Index (Calculated from recent error density)
-    const recentAudits = await prisma.admissionCheck.findMany({
-      take: 20,
-      orderBy: { createdAt: 'desc' },
-      select: { issueCat: true }
-    })
-    const failureRate = recentAudits.length > 0 
-      ? recentAudits.filter(a => a.issueCat).length / recentAudits.length 
-      : 0
-    
-    const riskIndex = failureRate > 0.3 ? "High" : failureRate > 0.1 ? "Medium" : "Low"
+      const riskIndex = failureRate > 0.3 ? "High" : failureRate > 0.1 ? "Medium" : "Low"
 
-    return {
-      success: true,
-      data: {
-        precision: avgPrecision.toFixed(1) + "%",
-        volume: auditCount,
-        flags: issueCount,
-        risk: riskIndex,
-        precisionTrend: "+1.2%", // Mock trend for now
-        volumeTrend: "+5%",
-        flagsTrend: "-2"
+      return {
+        success: true,
+        data: {
+          precision: avgPrecision.toFixed(1) + "%",
+          volume: auditCount,
+          flags: issueCount,
+          risk: riskIndex,
+          precisionTrend: "+1.2%", // Mock trend for now
+          volumeTrend: "+5%",
+          flagsTrend: "-2"
+        }
       }
+    } catch (error: any) {
+      return { success: false, error: error.message }
     }
-  } catch (error: any) {
-    return { success: false, error: error.message }
-  }
-}
+  },
+  ["kpi-metrics"],
+  { revalidate: 300, tags: ["analytics"] }
+)
 
 export async function getShiftHeatmapData() {
   const audits = await prisma.admissionCheck.findMany({
