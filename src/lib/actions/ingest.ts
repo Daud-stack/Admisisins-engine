@@ -4,18 +4,13 @@ import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
+import crypto from "node:crypto"
 
 /**
- * Compute a simple hash from stringified JSON data.
- * Uses a fast FNV-1a inspired hash — sufficient for deduplication.
+ * Compute a SHA-256 hash from stringified JSON data for secure deduplication.
  */
 function computeHash(data: string): string {
-  let hash = 0x811c9dc5
-  for (let i = 0; i < data.length; i++) {
-    hash ^= data.charCodeAt(i)
-    hash = (hash * 0x01000193) >>> 0
-  }
-  return hash.toString(16).padStart(8, '0')
+  return crypto.createHash('sha256').update(data).digest('hex')
 }
 
 export async function ingestDataset(type: string, data: any[], fileName: string) {
