@@ -6,27 +6,51 @@ import { authOptions } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
 import { getRootCauseSuggestion, calculateSLADeadline } from "@/lib/intelligence"
 import { checkAndUnlockAchievements } from "@/lib/actions/gamification"
+import { z } from "zod"
+
+
+const dqcSchema = z.object({
+  date: z.string().or(z.date()),
+  shift: z.enum(['MORNING', 'AFTERNOON', 'NIGHT']),
+  patientName: z.string().min(1),
+  admNo: z.string().min(1),
+  ptype: z.enum(['MEDICAL AID', 'CASH', 'GUARANTEED', 'INTERNATIONAL MEDICAL INSURANCE']),
+  prenote: z.enum(['Y', 'N', 'NA']),
+  medaid: z.enum(['Y', 'N', 'NA']),
+  diag: z.enum(['Y', 'N', 'NA']),
+  receipt: z.enum(['Y', 'N', 'NA']),
+  bio: z.enum(['Y', 'N', 'NA']),
+  gop: z.enum(['Y', 'N', 'NA']),
+  comment: z.string().optional().nullable()
+})
 
 export async function createDQCRecord(formData: any) {
   const session = await getServerSession(authOptions)
   if (!session) throw new Error("Unauthorized")
 
-  const { 
-    date, 
-    shift, 
-    patientName, 
-    admNo, 
-    ptype, 
-    prenote, 
-    medaid, 
-    diag, 
-    receipt, 
-    bio, 
-    gop, 
-    comment 
-  } = formData
+  try {
+    const validatedData = dqcSchema.safeParse(formData);
+    if (!validatedData.success) {
+      console.error("DQC Validation Error:", validatedData.error);
+      return { success: false, error: "Validation failed" };
+    }
 
-  // Calculate Issue Category based on "N" responses
+    const {
+      date,
+      shift,
+      patientName,
+      admNo,
+      ptype,
+      prenote,
+      medaid,
+      diag,
+      receipt,
+      bio,
+      gop,
+      comment
+    } = validatedData.data
+
+    // Calculate Issue Category based on "N" responses
   const issues: string[] = []
   if (prenote === "N") issues.push("Prenote")
   if (medaid === "N") issues.push("MedAid")
@@ -37,7 +61,6 @@ export async function createDQCRecord(formData: any) {
   
   const issueCat = issues.join(", ")
 
-  try {
     const result = await prisma.$transaction(async (tx) => {
       // 1. Create the DQC Record
       const dqc = await tx.admissionCheck.create({
@@ -105,6 +128,6 @@ export async function createDQCRecord(formData: any) {
     return { success: true, data: result }
   } catch (error: any) {
     console.error("DQC Create Error:", error)
-    return { success: false, error: error.message }
+    return { success: false, error: "An internal error occurred" }
   }
 }
