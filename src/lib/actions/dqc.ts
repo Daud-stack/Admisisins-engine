@@ -1,5 +1,6 @@
 "use server"
 
+import { z } from "zod"
 import prisma from "@/lib/prisma"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
@@ -7,9 +8,31 @@ import { revalidatePath } from "next/cache"
 import { getRootCauseSuggestion, calculateSLADeadline } from "@/lib/intelligence"
 import { checkAndUnlockAchievements } from "@/lib/actions/gamification"
 
+
+const dqcSchema = z.object({
+  date: z.string().or(z.date()),
+  shift: z.enum(['MORNING', 'AFTERNOON', 'NIGHT']),
+  patientName: z.string().min(1),
+  admNo: z.string().min(1),
+  ptype: z.enum(['MEDICAL AID', 'CASH', 'GUARANTEED', 'INTERNATIONAL MEDICAL INSURANCE']),
+  prenote: z.enum(['Y', 'N', 'NA']).default('NA'),
+  medaid: z.enum(['Y', 'N', 'NA']).default('NA'),
+  diag: z.enum(['Y', 'N', 'NA']).default('NA'),
+  receipt: z.enum(['Y', 'N', 'NA']).default('NA'),
+  bio: z.enum(['Y', 'N', 'NA']).default('NA'),
+  gop: z.enum(['Y', 'N', 'NA']).default('NA'),
+  comment: z.string().optional().nullable(),
+})
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function createDQCRecord(formData: any) {
   const session = await getServerSession(authOptions)
   if (!session) throw new Error("Unauthorized")
+
+  const parsed = dqcSchema.safeParse(formData)
+  if (!parsed.success) {
+    return { success: false, error: "Invalid input data" }
+  }
 
   const { 
     date, 
@@ -24,7 +47,8 @@ export async function createDQCRecord(formData: any) {
     bio, 
     gop, 
     comment 
-  } = formData
+  } = parsed.data
+
 
   // Calculate Issue Category based on "N" responses
   const issues: string[] = []
