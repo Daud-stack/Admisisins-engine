@@ -1,9 +1,14 @@
 "use server"
 
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 import prisma from "@/lib/prisma"
 
 export async function getAuditTrail(limit: number = 30) {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session) throw new Error("Unauthorized")
+
     const logs = await prisma.systemLog.findMany({
       take: limit,
       orderBy: { createdAt: 'desc' }
@@ -33,7 +38,8 @@ export async function getAuditTrail(limit: number = 30) {
 
     return { success: true, data: enriched }
   } catch (error: any) {
-    return { success: false, error: error.message, data: [] }
+    console.error("Error in getAuditTrail:", error)
+    return { success: false, error: "An internal error occurred", data: [] }
   }
 }
 
@@ -60,6 +66,7 @@ export async function getSignoffHistory(limit: number = 20) {
 
     return { success: true, data }
   } catch (error: any) {
-    return { success: false, error: error.message, data: [] }
+    console.error("Error in getSignoffHistory:", error)
+    return { success: false, error: "An internal error occurred", data: [] }
   }
 }
