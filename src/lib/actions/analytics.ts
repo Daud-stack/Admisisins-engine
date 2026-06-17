@@ -1,9 +1,14 @@
 "use server"
 
 import prisma from "@/lib/prisma"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 
 export async function getKPIMetrics() {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session) throw new Error("Unauthorized")
+
     // 1. Calculate Station Precision (Average of all validated Peer Audits)
     const peerAudits = await prisma.peerAudit.findMany({
       where: { status: "Validated" },
@@ -46,73 +51,90 @@ export async function getKPIMetrics() {
       }
     }
   } catch (error: any) {
-    return { success: false, error: error.message }
+    console.error("Error in getKPIMetrics:", error)
+    return { success: false, error: "An internal error occurred" }
   }
 }
 
 export async function getShiftHeatmapData() {
-  const audits = await prisma.admissionCheck.findMany({
-    select: {
-      date: true,
-      shift: true,
-      issueCat: true
-    }
-  })
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session) throw new Error("Unauthorized")
 
-  const heatmap: Record<string, number> = {}
-  const shifts = ["MORNING", "AFTERNOON", "NIGHT"]
-  
-  for (let day = 0; day < 7; day++) {
-    for (const shift of shifts) {
-      heatmap[`${day}-${shift}`] = 0
+    const audits = await prisma.admissionCheck.findMany({
+      select: {
+        date: true,
+        shift: true,
+        issueCat: true
+      }
+    })
+
+    const heatmap: Record<string, number> = {}
+    const shifts = ["MORNING", "AFTERNOON", "NIGHT"]
+
+    for (let day = 0; day < 7; day++) {
+      for (const shift of shifts) {
+        heatmap[`${day}-${shift}`] = 0
+      }
     }
+
+    audits.forEach(audit => {
+      if (audit.issueCat) {
+        const day = new Date(audit.date).getDay()
+        const key = `${day}-${audit.shift}`
+        heatmap[key] = (heatmap[key] || 0) + 1
+      }
+    })
+
+    return { success: true, data: heatmap }
+  } catch (error: any) {
+    console.error("Error in getShiftHeatmapData:", error)
+    return { success: false, error: "An internal error occurred" }
   }
-
-  audits.forEach(audit => {
-    if (audit.issueCat) {
-      const day = new Date(audit.date).getDay()
-      const key = `${day}-${audit.shift}`
-      heatmap[key] = (heatmap[key] || 0) + 1
-    }
-  })
-
-  return { success: true, data: heatmap }
 }
 
 export async function getVolumeErrorCorrelation() {
-  // 1. Get total admissions from IngestedData (Throughput)
-  const throughputData = await prisma.ingestedData.findMany({
-    where: { type: 'THROUGHPUT' },
-    select: { loadedAt: true }
-  })
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session) throw new Error("Unauthorized")
 
-  // 2. Get error counts from AdmissionCheck
-  const audits = await prisma.admissionCheck.findMany({
-    select: { date: true, issueCat: true }
-  })
+    // 1. Get total admissions from IngestedData (Throughput)
+    const throughputData = await prisma.ingestedData.findMany({
+      where: { type: 'THROUGHPUT' },
+      select: { loadedAt: true }
+    })
 
-  const dailyStats: Record<string, { total: number, errors: number }> = {}
+    // 2. Get error counts from AdmissionCheck
+    const audits = await prisma.admissionCheck.findMany({
+      select: { date: true, issueCat: true }
+    })
 
-  // Process Throughput (Total Volume)
-  throughputData.forEach(item => {
-    const d = item.loadedAt.toISOString().split('T')[0]
-    if (!dailyStats[d]) dailyStats[d] = { total: 0, errors: 0 }
-    dailyStats[d].total++
-  })
+    const dailyStats: Record<string, { total: number, errors: number }> = {}
 
-  // Process Audits (Error Volume)
-  audits.forEach(a => {
-    const d = a.date.toISOString().split('T')[0]
-    if (!dailyStats[d]) dailyStats[d] = { total: 0, errors: 0 }
-    // If no throughput record for this date, count audit as part of total too
-    if (dailyStats[d].total === 0) dailyStats[d].total++ 
-    if (a.issueCat) dailyStats[d].errors++
-  })
+    // Process Throughput (Total Volume)
+    throughputData.forEach(item => {
+      const d = item.loadedAt.toISOString().split('T')[0]
+      if (!dailyStats[d]) dailyStats[d] = { total: 0, errors: 0 }
+      dailyStats[d].total++
+    })
 
-  const chartData = Object.entries(dailyStats).map(([date, stats]) => ({
-    date,
-    ...stats
-  })).sort((a,b) => a.date.localeCompare(b.date))
+    // Process Audits (Error Volume)
+    audits.forEach(a => {
+      const d = a.date.toISOString().split('T')[0]
+      if (!dailyStats[d]) dailyStats[d] = { total: 0, errors: 0 }
+      // If no throughput record for this date, count audit as part of total too
+      if (dailyStats[d].total === 0) dailyStats[d].total++
+      if (a.issueCat) dailyStats[d].errors++
+    })
 
-  return { success: true, data: chartData }
+    const chartData = Object.entries(dailyStats).map(([date, stats]) => ({
+      date,
+      ...stats
+    })).sort((a,b) => a.date.localeCompare(b.date))
+
+    return { success: true, data: chartData }
+  } catch (error: any) {
+    console.error("Error in getVolumeErrorCorrelation:", error)
+    return { success: false, error: "An internal error occurred" }
+  }
 }
