@@ -1,0 +1,8 @@
+🎯 What:
+Added server-side authentication and role-based access control to the exported server actions in `src/lib/actions/management-actions.ts`.
+
+⚠️ Risk:
+Prior to this fix, any unauthenticated or unauthorized user could invoke the management actions (`getStaffPerformanceSummary`, `getManagementKPIs`, `getOperationalTimeline`, `getIngestionHistory`), leading to a critical information disclosure of staff performance and company-wide metrics.
+
+🛡️ Solution:
+Implemented `getServerSession` along with `authOptions` checks to assert that the caller is both authenticated and holds an `ADMIN` role. This mirrors the access validation mechanism found in `src/lib/actions/users.ts`.
