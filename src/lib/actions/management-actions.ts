@@ -1,9 +1,15 @@
 "use server"
 
 import prisma from "@/lib/prisma"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
+
 
 export async function getManagementKPIs() {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session) throw new Error("Unauthorized")
+
     const [
       totalAdmissions,
       totalIssues,
@@ -69,6 +75,9 @@ export async function getManagementKPIs() {
 
 export async function getStaffPerformanceSummary() {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session) throw new Error("Unauthorized")
+
     const users = await prisma.user.findMany({
       where: { role: "CLERK", status: "Active" },
       include: {
@@ -113,6 +122,9 @@ export async function getStaffPerformanceSummary() {
 
 export async function getOperationalTimeline() {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session) throw new Error("Unauthorized")
+
     const events = await prisma.systemLog.findMany({
       take: 20,
       orderBy: { createdAt: 'desc' },
@@ -134,6 +146,9 @@ export async function getOperationalTimeline() {
 
 export async function getIngestionHistory() {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session) throw new Error("Unauthorized")
+
     const history = await prisma.fileIngestion.findMany({
       orderBy: { uploadedAt: 'desc' },
       take: 20
