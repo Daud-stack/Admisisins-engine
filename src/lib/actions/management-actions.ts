@@ -1,8 +1,13 @@
 "use server"
 
 import prisma from "@/lib/prisma"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 
 export async function getManagementKPIs() {
+  const session = await getServerSession(authOptions)
+  if (!session) throw new Error("Unauthorized")
+
   try {
     const [
       totalAdmissions,
@@ -32,7 +37,7 @@ export async function getManagementKPIs() {
 
     let totalRevenue = 0
     authData.forEach(r => {
-      const d = r.data as any
+      const d = r.data as Record<string, unknown>
       totalRevenue += parseFloat(String(d.Amount || d.Total || 0).replace(/[$,]/g, ''))
     })
 
@@ -62,12 +67,15 @@ export async function getManagementKPIs() {
         slaHealth: Math.round(slaHealth * 10) / 10,
       }
     }
-  } catch (error: any) {
-    return { success: false, error: error.message }
+  } catch (error: unknown) {
+    return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
   }
 }
 
 export async function getStaffPerformanceSummary() {
+  const session = await getServerSession(authOptions)
+  if (!session) throw new Error("Unauthorized")
+
   try {
     const users = await prisma.user.findMany({
       where: { role: "CLERK", status: "Active" },
@@ -106,12 +114,15 @@ export async function getStaffPerformanceSummary() {
     }).sort((a, b) => b.precisionRate - a.precisionRate)
 
     return { success: true, data: summary }
-  } catch (error: any) {
-    return { success: false, error: error.message }
+  } catch (error: unknown) {
+    return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
   }
 }
 
 export async function getOperationalTimeline() {
+  const session = await getServerSession(authOptions)
+  if (!session) throw new Error("Unauthorized")
+
   try {
     const events = await prisma.systemLog.findMany({
       take: 20,
@@ -127,12 +138,15 @@ export async function getOperationalTimeline() {
     })
 
     return { success: true, data: events }
-  } catch (error: any) {
-    return { success: false, error: error.message }
+  } catch (error: unknown) {
+    return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
   }
 }
 
 export async function getIngestionHistory() {
+  const session = await getServerSession(authOptions)
+  if (!session) throw new Error("Unauthorized")
+
   try {
     const history = await prisma.fileIngestion.findMany({
       orderBy: { uploadedAt: 'desc' },
@@ -140,7 +154,7 @@ export async function getIngestionHistory() {
     })
 
     return { success: true, data: history }
-  } catch (error: any) {
-    return { success: false, error: error.message }
+  } catch (error: unknown) {
+    return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
   }
 }
