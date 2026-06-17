@@ -1,0 +1,21 @@
+--- src/lib/actions/financial-actions.ts
++++ src/lib/actions/financial-actions.ts
+@@ -2,6 +2,8 @@
+
+ import prisma from "@/lib/prisma"
+ import { calculateBadDebtRisk, getSchemeBreakdown, getCashFlowForecast } from "@/lib/financial"
++import { getServerSession } from "next-auth"
++import { authOptions } from "@/lib/auth"
+
+ export async function getTreasuryOverview() {
+   try {
+@@ -97,6 +99,9 @@
+
+ export async function getRevenueLeakage() {
+   try {
++    const session = await getServerSession(authOptions)
++    if (!session) throw new Error("Unauthorized")
++
+     const dqcRecords = await prisma.admissionCheck.findMany({
+       select: {
+         admNo: true,
