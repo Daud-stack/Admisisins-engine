@@ -2,9 +2,14 @@
 
 import prisma from "@/lib/prisma"
 import { calculateBadDebtRisk, getSchemeBreakdown, getCashFlowForecast } from "@/lib/financial"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 
 export async function getTreasuryOverview() {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session) throw new Error("Unauthorized")
+
     const authData = await prisma.ingestedData.findMany({
       where: { type: 'AUTH' }
     })
@@ -51,6 +56,9 @@ export async function getTreasuryOverview() {
 
 export async function getBadDebtRiskReport() {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session) throw new Error("Unauthorized")
+
     const authData = await prisma.ingestedData.findMany({
       where: { type: 'AUTH' },
       select: { data: true, loadedAt: true }
@@ -82,6 +90,9 @@ export async function getBadDebtRiskReport() {
 
 export async function getSchemeProfitability() {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session) throw new Error("Unauthorized")
+
     const authData = await prisma.ingestedData.findMany({
       where: { type: 'AUTH' },
       select: { data: true }
@@ -97,6 +108,9 @@ export async function getSchemeProfitability() {
 
 export async function getRevenueLeakage() {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session) throw new Error("Unauthorized")
+
     const dqcRecords = await prisma.admissionCheck.findMany({
       select: {
         admNo: true,
@@ -144,6 +158,9 @@ export async function getRevenueLeakage() {
 
 export async function getCashFlowData() {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session) throw new Error("Unauthorized")
+
     const authData = await prisma.ingestedData.findMany({
       where: { type: 'AUTH' },
       select: { data: true, loadedAt: true }
