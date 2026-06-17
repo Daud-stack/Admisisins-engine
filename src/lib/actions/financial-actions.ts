@@ -2,6 +2,8 @@
 
 import prisma from "@/lib/prisma"
 import { calculateBadDebtRisk, getSchemeBreakdown, getCashFlowForecast } from "@/lib/financial"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 
 export async function getTreasuryOverview() {
   try {
@@ -15,7 +17,7 @@ export async function getTreasuryOverview() {
     let rejectedValue = 0
 
     authData.forEach(record => {
-      const data = record.data as any
+      const data = record.data as Record<string, unknown>
       const amount = parseFloat(String(data.Amount || data.Total || 0).replace(/[$,]/g, ''))
       const paid = parseFloat(String(data.Paid || data.Collected || 0).replace(/[$,]/g, ''))
       const status = String(data.Status || "").toUpperCase()
@@ -44,8 +46,9 @@ export async function getTreasuryOverview() {
         episodeCount: authData.length
       }
     }
-  } catch (error: any) {
-    return { success: false, error: error.message }
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error"
+    return { success: false, error: errorMessage }
   }
 }
 
@@ -143,6 +146,9 @@ export async function getRevenueLeakage() {
 }
 
 export async function getCashFlowData() {
+  const session = await getServerSession(authOptions)
+  if (!session) throw new Error("Unauthorized")
+
   try {
     const authData = await prisma.ingestedData.findMany({
       where: { type: 'AUTH' },
@@ -167,6 +173,7 @@ export async function getCashFlowData() {
 
     return { success: true, data: forecast }
   } catch (error: any) {
-    return { success: false, error: error.message }
+    console.error("getCashFlowData Error:", error)
+    return { success: false, error: 'An internal error occurred' }
   }
 }
