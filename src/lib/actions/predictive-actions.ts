@@ -48,18 +48,22 @@ export async function getAdmissionForecast() {
 
 export async function getErrorTrendForecast() {
   try {
-    const audits = await prisma.admissionCheck.findMany({
-      select: { date: true, issueCat: true },
+    const grouped = await prisma.admissionCheck.groupBy({
+      by: ['date'],
+      _count: {
+        _all: true,
+        issueCat: true
+      },
       orderBy: { date: 'asc' }
     })
 
     // Group by date
     const dailyStats: Record<string, { total: number; errors: number }> = {}
-    audits.forEach(a => {
-      const d = a.date.toISOString().split('T')[0]
+    grouped.forEach(g => {
+      const d = g.date.toISOString().split('T')[0]
       if (!dailyStats[d]) dailyStats[d] = { total: 0, errors: 0 }
-      dailyStats[d].total++
-      if (a.issueCat) dailyStats[d].errors++
+      dailyStats[d].total += g._count._all
+      dailyStats[d].errors += g._count.issueCat
     })
 
     const dates = Object.keys(dailyStats).sort()
