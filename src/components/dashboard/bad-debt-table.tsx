@@ -1,7 +1,7 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { AlertTriangle, DollarSign } from "lucide-react"
+import { AlertTriangle } from "lucide-react"
 
 interface BadDebtRiskItem {
   episodeNo: string

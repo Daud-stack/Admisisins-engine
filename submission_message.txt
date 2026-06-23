@@ -1,0 +1,14 @@
+🧹 Remove unused DollarSign import in bad-debt-table.tsx
+
+🎯 What
+Removed the unused `DollarSign` import from `lucide-react` in `src/components/dashboard/bad-debt-table.tsx`.
+
+💡 Why
+This improves the code health by cleaning up dead code and adhering to best practices, which enhances the file's maintainability and readability without altering any existing behavior.
+
+✅ Verification
+- Verified that `AlertTriangle` was still correctly imported and used.
+- Executed `npm run build` and `bun test` successfully, demonstrating no regressions or type-checking issues were introduced.
+
+✨ Result
+A cleaner file and resolved code health issue regarding unused imports.
