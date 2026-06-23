@@ -1,8 +1,12 @@
 "use server"
 
 import prisma from "@/lib/prisma"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 
 export async function getAuditTrail(limit: number = 30) {
+  const session = await getServerSession(authOptions)
+  if (!session) return { success: false, error: 'Unauthorized' }
   try {
     const logs = await prisma.systemLog.findMany({
       take: limit,
@@ -33,11 +37,14 @@ export async function getAuditTrail(limit: number = 30) {
 
     return { success: true, data: enriched }
   } catch (error: any) {
-    return { success: false, error: error.message, data: [] }
+    console.error(error);
+    return { success: false, error: 'An internal error occurred', data: [] }
   }
 }
 
 export async function getSignoffHistory(limit: number = 20) {
+  const session = await getServerSession(authOptions)
+  if (!session) return { success: false, error: 'Unauthorized' }
   try {
     const signoffs = await prisma.shiftSignoff.findMany({
       take: limit,
@@ -60,6 +67,7 @@ export async function getSignoffHistory(limit: number = 20) {
 
     return { success: true, data }
   } catch (error: any) {
-    return { success: false, error: error.message, data: [] }
+    console.error(error);
+    return { success: false, error: 'An internal error occurred', data: [] }
   }
 }
