@@ -102,6 +102,12 @@ export async function ingestDataset(type: string, data: any[], fileName: string)
 
 export async function clearDataset(type: string) {
   try {
+    const session = await getServerSession(authOptions)
+    const userRole = (session?.user as any)?.role
+    if (!session || !["SUPERVISOR", "ADMIN"].includes(userRole)) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
     await prisma.$transaction(async (tx) => {
       await tx.ingestedData.deleteMany({ where: { type } })
       await tx.fileIngestion.deleteMany({ where: { type } })
@@ -112,6 +118,7 @@ export async function clearDataset(type: string) {
     revalidatePath("/management")
     return { success: true }
   } catch (error: any) {
-    return { success: false, error: error.message }
+    console.error("Clear Dataset Error:", error)
+    return { success: false, error: 'An internal error occurred' }
   }
 }
