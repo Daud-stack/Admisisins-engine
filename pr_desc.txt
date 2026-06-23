@@ -1,0 +1,3 @@
+🎯 What: Added `getServerSession` checks to all exported functions in `src/lib/actions/management-actions.ts`. Included checks for `MANAGER` or `ADMIN` roles before proceeding with operations. Addressed an Information Disclosure issue by sending a generic error instead of `error.message`.
+⚠️ Risk: Any authenticated or unauthenticated user could previously access high-level management operations and operational KPIs. In addition, unhandled exceptions leaked raw database and application error strings.
+🛡️ Solution: Implemented server-side role validation using `next-auth`, strictly enforcing the `MANAGER` and `ADMIN` RBAC matrix defined for these functions. Switched to `console.error` for errors and returning 'An internal error occurred'.
