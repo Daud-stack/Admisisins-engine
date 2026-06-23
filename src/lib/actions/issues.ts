@@ -16,15 +16,15 @@ export async function getIssues() {
     })
     return { success: true, data: issues }
   } catch (error: any) {
-    return { success: false, error: error.message }
+    console.error("Error in getIssues:", error)
+    return { success: false, error: "An internal error occurred" }
   }
 }
 
 export async function updateIssueStatus(issueId: string, status: string, comment?: string) {
-  const session = await getServerSession(authOptions)
-  if (!session) throw new Error("Unauthorized")
-
   try {
+    const session = await getServerSession(authOptions)
+    if (!session) return { success: false, error: "Unauthorized" }
     const data: any = { status }
     
     if (status === "Closed") {
@@ -49,6 +49,7 @@ export async function updateIssueStatus(issueId: string, status: string, comment
     revalidatePath("/dashboard")
     return { success: true }
   } catch (error: any) {
-    return { success: false, error: error.message }
+    console.error("Error in updateIssueStatus:", error)
+    return { success: false, error: "An internal error occurred" }
   }
 }
