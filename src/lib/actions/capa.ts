@@ -2,9 +2,14 @@
 
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 
 export async function createActionPlan(issueId: string, description: string, type: string) {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session) return { success: false, error: "Unauthorized" }
+
     const result = await prisma.actionPlan.create({
       data: {
         issueId,
@@ -17,12 +22,16 @@ export async function createActionPlan(issueId: string, description: string, typ
     revalidatePath("/tracker")
     return { success: true, data: result }
   } catch (error: any) {
-    return { success: false, error: error.message }
+    console.error(error)
+    return { success: false, error: "An internal error occurred" }
   }
 }
 
 export async function completeActionPlan(planId: string) {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session) return { success: false, error: "Unauthorized" }
+
     await prisma.actionPlan.update({
       where: { id: planId },
       data: { status: "Completed" }
@@ -30,6 +39,7 @@ export async function completeActionPlan(planId: string) {
     revalidatePath("/tracker")
     return { success: true }
   } catch (error: any) {
-    return { success: false, error: error.message }
+    console.error(error)
+    return { success: false, error: "An internal error occurred" }
   }
 }
