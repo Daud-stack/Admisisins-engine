@@ -6,6 +6,9 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 
 export async function getIssues() {
+  const session = await getServerSession(authOptions)
+  if (!session) return { success: false, error: 'Unauthorized' }
+
   try {
     const issues = await prisma.issue.findMany({
       orderBy: { createdAt: 'desc' },
@@ -16,13 +19,14 @@ export async function getIssues() {
     })
     return { success: true, data: issues }
   } catch (error: any) {
-    return { success: false, error: error.message }
+    console.error("Error in getIssues:", error)
+    return { success: false, error: 'An internal error occurred' }
   }
 }
 
 export async function updateIssueStatus(issueId: string, status: string, comment?: string) {
   const session = await getServerSession(authOptions)
-  if (!session) throw new Error("Unauthorized")
+  if (!session) return { success: false, error: 'Unauthorized' }
 
   try {
     const data: any = { status }
@@ -49,6 +53,7 @@ export async function updateIssueStatus(issueId: string, status: string, comment
     revalidatePath("/dashboard")
     return { success: true }
   } catch (error: any) {
-    return { success: false, error: error.message }
+    console.error("Error in updateIssueStatus:", error)
+    return { success: false, error: 'An internal error occurred' }
   }
 }
