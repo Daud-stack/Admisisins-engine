@@ -1,0 +1,13 @@
+🎯 **What:** The `calculateBadDebtRisk` function in `src/lib/financial.ts` lacked test coverage, creating a risk for future regressions when modifying the financial intelligence algorithms.
+
+📊 **Coverage:** Added comprehensive tests in `src/lib/__tests__/financial.test.ts` covering:
+- Empty array processing
+- Risk scoring based on `Status` factor ('REJECTED', 'PENDING', 'PARTIAL', 'APPROVED')
+- Risk scoring based on `Aging` factor (> 90 days, > 60 days, > 30 days, > 14 days)
+- Risk scoring based on `Amount` factor (> 50000, > 20000, > 10000, > 5000)
+- Scheme factor scoring ('CASH', 'SELF')
+- `riskLevel` mappings ('critical', 'high', 'medium', 'low')
+- Score capping at 100 maximum
+- Output sorting in descending order of `riskScore`
+
+✨ **Result:** Test coverage for the `calculateBadDebtRisk` function has been significantly improved, increasing reliability. The codebase can now safely verify changes to the risk scoring algorithm via the `bun test` runner.
