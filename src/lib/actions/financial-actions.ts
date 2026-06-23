@@ -2,8 +2,15 @@
 
 import prisma from "@/lib/prisma"
 import { calculateBadDebtRisk, getSchemeBreakdown, getCashFlowForecast } from "@/lib/financial"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 
 export async function getTreasuryOverview() {
+  const session = await getServerSession(authOptions)
+  if (!session || !["MANAGER", "ADMIN"].includes((session.user as any)?.role)) {
+    return { success: false, error: "Unauthorized" }
+  }
+
   try {
     const authData = await prisma.ingestedData.findMany({
       where: { type: 'AUTH' }
@@ -45,11 +52,17 @@ export async function getTreasuryOverview() {
       }
     }
   } catch (error: any) {
-    return { success: false, error: error.message }
+    console.error("Financial Action Error:", error);
+    return { success: false, error: "An internal error occurred" }
   }
 }
 
 export async function getBadDebtRiskReport() {
+  const session = await getServerSession(authOptions)
+  if (!session || !["MANAGER", "ADMIN"].includes((session.user as any)?.role)) {
+    return { success: false, error: "Unauthorized" }
+  }
+
   try {
     const authData = await prisma.ingestedData.findMany({
       where: { type: 'AUTH' },
@@ -76,11 +89,17 @@ export async function getBadDebtRiskReport() {
       }
     }
   } catch (error: any) {
-    return { success: false, error: error.message }
+    console.error("Financial Action Error:", error);
+    return { success: false, error: "An internal error occurred" }
   }
 }
 
 export async function getSchemeProfitability() {
+  const session = await getServerSession(authOptions)
+  if (!session || !["MANAGER", "ADMIN"].includes((session.user as any)?.role)) {
+    return { success: false, error: "Unauthorized" }
+  }
+
   try {
     const authData = await prisma.ingestedData.findMany({
       where: { type: 'AUTH' },
@@ -91,11 +110,17 @@ export async function getSchemeProfitability() {
 
     return { success: true, data: schemes }
   } catch (error: any) {
-    return { success: false, error: error.message }
+    console.error("Financial Action Error:", error);
+    return { success: false, error: "An internal error occurred" }
   }
 }
 
 export async function getRevenueLeakage() {
+  const session = await getServerSession(authOptions)
+  if (!session || !["MANAGER", "ADMIN"].includes((session.user as any)?.role)) {
+    return { success: false, error: "Unauthorized" }
+  }
+
   try {
     const dqcRecords = await prisma.admissionCheck.findMany({
       select: {
@@ -138,11 +163,17 @@ export async function getRevenueLeakage() {
       }
     }
   } catch (error: any) {
-    return { success: false, error: error.message }
+    console.error("Financial Action Error:", error);
+    return { success: false, error: "An internal error occurred" }
   }
 }
 
 export async function getCashFlowData() {
+  const session = await getServerSession(authOptions)
+  if (!session || !["MANAGER", "ADMIN"].includes((session.user as any)?.role)) {
+    return { success: false, error: "Unauthorized" }
+  }
+
   try {
     const authData = await prisma.ingestedData.findMany({
       where: { type: 'AUTH' },
@@ -167,6 +198,7 @@ export async function getCashFlowData() {
 
     return { success: true, data: forecast }
   } catch (error: any) {
-    return { success: false, error: error.message }
+    console.error("Financial Action Error:", error);
+    return { success: false, error: "An internal error occurred" }
   }
 }
