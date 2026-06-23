@@ -15,9 +15,19 @@ export async function getClerkRankings() {
 
   const rankings = users.map(user => {
     // Calculate Average Precision
-    const peerAudits = user.checks.flatMap(c => c.peerAudits)
-    const totalScore = peerAudits.reduce((sum, a) => sum + (a.score || 0), 0)
-    const avgPrecision = peerAudits.length > 0 ? totalScore / peerAudits.length : 100
+    let totalScore = 0;
+    let peerAuditsCount = 0;
+
+    for (let i = 0; i < user.checks.length; i++) {
+      const audits = user.checks[i].peerAudits;
+      const len = audits.length;
+      peerAuditsCount += len;
+      for (let j = 0; j < len; j++) {
+        totalScore += audits[j].score || 0;
+      }
+    }
+
+    const avgPrecision = peerAuditsCount > 0 ? totalScore / peerAuditsCount : 100
 
     // Efficiency Factor (Audits per day)
     const auditCount = user.checks.length
@@ -48,8 +58,17 @@ export async function checkAndUnlockAchievements(userId: string) {
   if (!user) return
 
   const auditCount = user.checks.length
-  const peerAudits = user.checks.flatMap(c => c.peerAudits)
-  const perfectAudits = peerAudits.filter(a => a.score === 100).length
+
+  let perfectAudits = 0;
+  for (let i = 0; i < user.checks.length; i++) {
+    const audits = user.checks[i].peerAudits;
+    const len = audits.length;
+    for (let j = 0; j < len; j++) {
+      if (audits[j].score === 100) {
+        perfectAudits++;
+      }
+    }
+  }
 
   const currentBadges = new Set(user.achievements.map(a => a.type))
 
