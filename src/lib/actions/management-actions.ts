@@ -1,9 +1,16 @@
 "use server"
 
 import prisma from "@/lib/prisma"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 
 export async function getManagementKPIs() {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session || !["MANAGER", "ADMIN"].includes((session.user as any)?.role)) {
+      return { success: false, error: "Unauthorized" }
+    }
+
     const [
       totalAdmissions,
       totalIssues,
@@ -63,12 +70,18 @@ export async function getManagementKPIs() {
       }
     }
   } catch (error: any) {
-    return { success: false, error: error.message }
+    console.error("getManagementKPIs Error:", error)
+    return { success: false, error: "An internal error occurred" }
   }
 }
 
 export async function getStaffPerformanceSummary() {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session || !["MANAGER", "ADMIN"].includes((session.user as any)?.role)) {
+      return { success: false, error: "Unauthorized" }
+    }
+
     const users = await prisma.user.findMany({
       where: { role: "CLERK", status: "Active" },
       include: {
@@ -107,12 +120,18 @@ export async function getStaffPerformanceSummary() {
 
     return { success: true, data: summary }
   } catch (error: any) {
-    return { success: false, error: error.message }
+    console.error("getStaffPerformanceSummary Error:", error)
+    return { success: false, error: "An internal error occurred" }
   }
 }
 
 export async function getOperationalTimeline() {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session || !["MANAGER", "ADMIN"].includes((session.user as any)?.role)) {
+      return { success: false, error: "Unauthorized" }
+    }
+
     const events = await prisma.systemLog.findMany({
       take: 20,
       orderBy: { createdAt: 'desc' },
@@ -128,12 +147,18 @@ export async function getOperationalTimeline() {
 
     return { success: true, data: events }
   } catch (error: any) {
-    return { success: false, error: error.message }
+    console.error("getOperationalTimeline Error:", error)
+    return { success: false, error: "An internal error occurred" }
   }
 }
 
 export async function getIngestionHistory() {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session || !["MANAGER", "ADMIN"].includes((session.user as any)?.role)) {
+      return { success: false, error: "Unauthorized" }
+    }
+
     const history = await prisma.fileIngestion.findMany({
       orderBy: { uploadedAt: 'desc' },
       take: 20
@@ -141,6 +166,7 @@ export async function getIngestionHistory() {
 
     return { success: true, data: history }
   } catch (error: any) {
-    return { success: false, error: error.message }
+    console.error("getIngestionHistory Error:", error)
+    return { success: false, error: "An internal error occurred" }
   }
 }
