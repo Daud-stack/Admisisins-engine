@@ -1,0 +1,16 @@
+🧹 Refactor ForecastChart to improve readability and maintainability
+
+🎯 **What:**
+- Extracted the SVG `<defs>` block containing `linearGradient` definitions into a new internal component `ChartGradients` at the top of `src/components/dashboard/forecast-chart.tsx`.
+- Extracted inline formatting functions from `XAxis` (`tickFormatter`) and `Tooltip` (`formatter`, `labelFormatter`) into independent functions outside the component scope (`formatDateTick`, `formatTooltipValue`, `formatTooltipLabel`).
+
+💡 **Why:**
+- Reduces the size of the main `ForecastChart` function, making it easier to read and maintain.
+- Decouples logic from JSX layout, improving readability and organization by moving inline anonymous functions out of the Recharts component configuration.
+
+✅ **Verification:**
+- Verified that `npm run build` succeeds without type errors.
+- Verified that `npm run lint src/components/dashboard/forecast-chart.tsx` passes cleanly.
+
+✨ **Result:**
+- The `ForecastChart` component is now much cleaner, with presentation components separated from data formatting logic, adhering to better code health standards without changing behavior.
