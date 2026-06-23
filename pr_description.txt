@@ -1,0 +1,11 @@
+🎯 What: Added unit tests for the getRootCauseSuggestion function in src/lib/intelligence.ts.
+
+📊 Coverage: The tests now cover all logic paths for getRootCauseSuggestion, including:
+- Empty failures list.
+- Pattern 1 (Missing GOP + Missing MedAid).
+- Pattern 2 (Missing Biometric + Missing Prenote).
+- Pattern 3 (Missing Diagnosis).
+- Unrecognized failures (default fallback).
+- Multiple matching patterns with appropriate prioritization.
+
+✨ Result: Ensured accurate execution of automated root-cause suggestions, verified behavior using the `bun:test` framework, and improved testing coverage with no regressions.
