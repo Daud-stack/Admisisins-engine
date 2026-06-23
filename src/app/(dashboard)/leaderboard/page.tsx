@@ -11,8 +11,11 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
+export const dynamic = 'force-dynamic'
+
 export default async function LeaderboardPage() {
-  const { data: rankings = [] } = await getClerkRankings()
+  const response = await getClerkRankings()
+  const rankings = response.success ? response.data || [] : []
 
   const getBadgeIcon = (type: string) => {
     switch (type) {
@@ -20,6 +23,14 @@ export default async function LeaderboardPage() {
       case 'VolumeKing': return <Zap className="h-3 w-3 text-warn" />
       default: return <Award className="h-3 w-3 text-muted-foreground" />
     }
+  }
+
+  if (!response.success && response.error === 'Unauthorized') {
+    return (
+      <div className="max-w-6xl mx-auto py-8 text-center text-red-500">
+        You must be logged in to view the leaderboard.
+      </div>
+    )
   }
 
   return (
@@ -39,7 +50,7 @@ export default async function LeaderboardPage() {
             <Medal className="h-5 w-5 text-primary" /> Station Elite
           </h3>
           <div className="space-y-4">
-            {rankings.slice(0, 3).map((clerk, idx) => (
+            {rankings.slice(0, 3).map((clerk: any, idx: number) => (
               <div key={clerk.id} className={cn(
                 "p-6 rounded-3xl border relative overflow-hidden group transition-all",
                 idx === 0 ? "bg-primary/10 border-primary/30" : "bg-surface border-border"
@@ -95,7 +106,7 @@ export default async function LeaderboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50">
-                {rankings.map((clerk, idx) => (
+                {rankings.map((clerk: any, idx: number) => (
                   <tr key={clerk.id} className="hover:bg-white/2 transition-colors group">
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
