@@ -11,16 +11,17 @@ import {
 export async function getAdmissionForecast() {
   try {
     // Get daily throughput counts from IngestedData
-    const throughputData = await prisma.ingestedData.findMany({
+    const throughputData = await prisma.ingestedData.groupBy({
+      by: ['loadedAt'],
       where: { type: 'THROUGHPUT' },
-      select: { loadedAt: true }
+      _count: { loadedAt: true }
     })
 
     // Group by date
     const dailyCounts: Record<string, number> = {}
     throughputData.forEach(item => {
       const d = item.loadedAt.toISOString().split('T')[0]
-      dailyCounts[d] = (dailyCounts[d] || 0) + 1
+      dailyCounts[d] = (dailyCounts[d] || 0) + item._count.loadedAt
     })
 
     // Also include DQC records for volume if no throughput
