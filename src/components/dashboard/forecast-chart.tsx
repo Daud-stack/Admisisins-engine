@@ -23,6 +23,46 @@ interface ForecastChartProps {
   data: ForecastPoint[]
 }
 
+function ChartGradients() {
+  return (
+    <defs>
+      <linearGradient id="colorActual" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="5%" stopColor="#00c9a7" stopOpacity={0.15} />
+        <stop offset="95%" stopColor="#00c9a7" stopOpacity={0} />
+      </linearGradient>
+      <linearGradient id="colorForecast" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1} />
+        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+      </linearGradient>
+      <linearGradient id="colorBand" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.08} />
+        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.02} />
+      </linearGradient>
+    </defs>
+  )
+}
+
+const formatDateTick = (val: string | number | Date) => {
+  const d = new Date(val)
+  return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const formatTooltipValue = (value: any, name: any) => {
+  const labels: Record<string, string> = {
+    actual: "Actual",
+    forecast: "Forecast",
+    upper: "Upper CI",
+    lower: "Lower CI"
+  }
+  return [value, labels[name] || name]
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const formatTooltipLabel = (label: any) => {
+  return new Date(label).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
+}
+
 export default function ForecastChart({ data }: ForecastChartProps) {
   // Find the boundary between historical and forecast
   const boundaryIndex = data.findIndex(d => d.actual === undefined)
@@ -32,30 +72,14 @@ export default function ForecastChart({ data }: ForecastChartProps) {
     <div className="w-full h-full">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data}>
-          <defs>
-            <linearGradient id="colorActual" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#00c9a7" stopOpacity={0.15} />
-              <stop offset="95%" stopColor="#00c9a7" stopOpacity={0} />
-            </linearGradient>
-            <linearGradient id="colorForecast" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1} />
-              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-            </linearGradient>
-            <linearGradient id="colorBand" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.08} />
-              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.02} />
-            </linearGradient>
-          </defs>
+          <ChartGradients />
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.04)" />
           <XAxis
             dataKey="date"
             tick={{ fontSize: 9, fill: '#6b7280' }}
             axisLine={false}
             tickLine={false}
-            tickFormatter={(val) => {
-              const d = new Date(val)
-              return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
-            }}
+            tickFormatter={formatDateTick}
           />
           <YAxis
             tick={{ fontSize: 9, fill: '#6b7280' }}
@@ -69,16 +93,8 @@ export default function ForecastChart({ data }: ForecastChartProps) {
               borderRadius: '12px',
               fontSize: '11px'
             }}
-            formatter={(value: any, name: any) => {
-              const labels: Record<string, string> = {
-                actual: "Actual",
-                forecast: "Forecast",
-                upper: "Upper CI",
-                lower: "Lower CI"
-              }
-              return [value, labels[name] || name]
-            }}
-            labelFormatter={(label) => new Date(label).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+            formatter={formatTooltipValue}
+            labelFormatter={formatTooltipLabel}
           />
           {boundaryDate && (
             <ReferenceLine
