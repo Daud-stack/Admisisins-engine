@@ -1,6 +1,8 @@
 "use server"
 
 import prisma from "@/lib/prisma"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 import {
   forecastAdmissionVolume,
   predictErrorRate,
@@ -10,6 +12,11 @@ import {
 
 export async function getAdmissionForecast() {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
     // Get daily throughput counts from IngestedData
     const throughputData = await prisma.ingestedData.findMany({
       where: { type: 'THROUGHPUT' },
@@ -48,6 +55,11 @@ export async function getAdmissionForecast() {
 
 export async function getErrorTrendForecast() {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
     const audits = await prisma.admissionCheck.findMany({
       select: { date: true, issueCat: true },
       orderBy: { date: 'asc' }
@@ -89,6 +101,11 @@ export async function getErrorTrendForecast() {
 
 export async function getSLARiskMatrix() {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
     const openIssues = await prisma.issue.findMany({
       where: { status: { in: ["Open", "Pending"] } },
       select: {
@@ -125,6 +142,11 @@ export async function getSLARiskMatrix() {
 
 export async function getPredictiveSummary() {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
     const [forecast, errorTrend, slaRisk] = await Promise.all([
       getAdmissionForecast(),
       getErrorTrendForecast(),
